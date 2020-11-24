@@ -12,12 +12,53 @@ from dopamine.colab import utils as colab_utils
 from absl import flags
 import gin.tf
 
+#THIS FILE IS STILL WIP - WORK IN PROGRESS.finish it when understandig how to unbundle model from checkpoint
+
 
 #parameters:
+
+#game parameters
 GAMES = ['Asterix']
-alpha_range = [0,0.05,0.1]
+#alpha_range = [0,0.05,0.1]
+alpha_range = [0.05]
 epsilon_train_range = [0.1]
 epsilon_eval_range = [0.01]
+"""
+#demo training parameters
+Runner.num_iterations = 3
+Runner.training_steps = 3  # agent steps
+Runner.evaluation_steps = 3  # agent steps
+Runner.max_steps_per_episode = 3  # agent steps
+"""
+#original trainig parameters values:
+"""
+Runner.num_iterations = 200
+Runner.training_steps = 250000  # agent steps
+Runner.evaluation_steps = 125000  # agent steps
+Runner.max_steps_per_episode = 27000  # agent steps
+
+WrappedReplayBuffer.replay_capacity = 1000000
+WrappedReplayBuffer.batch_size = 32
+
+the game runned by the command:
+
+python -um dopamine.discrete_domains.train \
+  --base_dir /tmp/dopamine_runs \
+  --gin_files dopamine/agents/dqn/configs/dqn.gin
+
+
+on that settings the time took the model to train was around day and a half (around 35 hours)
+the output dir called /tmp/dopamine_runs and it's size in the end was 1.1 GB
+"""
+
+#dir
+baseDir = os.path.join('tmp','dopamineSimpleDemoExpiriment')
+
+#replay buffer parameters
+"""
+WrappedReplayBuffer.replay_capacity = 1000000
+WrappedReplayBuffer.batch_size = 32
+"""
 
 
 def create_experiment_log_path(base:str, game:str, ep_train:str, ep_eval:str, alpha:str) -> str:
@@ -27,10 +68,18 @@ def create_experiment_log_path(base:str, game:str, ep_train:str, ep_eval:str, al
     return path
 
 
+
+
 def main():
     with open(
             os.path.join(os.getcwd(),os.path.join('dopamine','jax','agents','rubust_dqn','configs','rubust_dqn.gin'))) as bindings:
         gin.parse_config(bindings)
+    #init demo params
+    gin.bind_parameter('Runner.num_iterations',3)
+    gin.bind_parameter('Runner.training_steps',3)
+    gin.bind_parameter('Runner.evaluation_steps',3)
+    gin.bind_parameter('Runner.max_steps_per_episode',3)
+    #start loop params
     for game in GAMES:
         gin.bind_parameter('atari_lib.create_atari_environment.game_name', game)
         for ep_train in epsilon_train_range:
@@ -39,7 +88,7 @@ def main():
                 gin.bind_parameter('JaxDQNAgent.epsilon_eval', ep_eval)
                 for alpha in alpha_range:
                     gin.bind_parameter('JaxRubustDQNAgent.alpha', alpha)
-                    LOG_PATH = create_experiment_log_path(os.getcwd(), game, str(ep_train), str(ep_eval), str(alpha))
+                    LOG_PATH = create_experiment_log_path(baseDir, game, str(ep_train), str(ep_eval), str(alpha))
                     print('start experiment.game:{},epsilon train:{},epsilon_test:{},alpha robust:{}.'.format(game, str(ep_train), str(ep_eval), str(alpha)))
                     dqn_runner = run_experiment.Runner(LOG_PATH, agent.create_rubust_dqn_agent)         #with learning
                     dqn_runner.run_experiment()
