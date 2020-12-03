@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-
+import tensorflow as tf
+from absl import logging
 import numpy as np
 
 import os
@@ -19,8 +20,8 @@ import gin.tf
 
 #game parameters
 GAMES = ['Asterix']
-#alpha_range = [0,0.05,0.1]
-alpha_range = [0.05]
+alpha_range = [0,0.05,0.1]
+#alpha_range = [0.05]
 epsilon_train_range = [0.1]
 epsilon_eval_range = [0.01]
 """
@@ -30,6 +31,11 @@ Runner.training_steps = 3  # agent steps
 Runner.evaluation_steps = 3  # agent steps
 Runner.max_steps_per_episode = 3  # agent steps
 """
+# init demo params
+# gin.bind_parameter('Runner.num_iterations',3)
+# gin.bind_parameter('Runner.training_steps',3)
+# gin.bind_parameter('Runner.evaluation_steps',3)
+# gin.bind_parameter('Runner.max_steps_per_episode',3)
 #original trainig parameters values:
 """
 Runner.num_iterations = 200
@@ -62,7 +68,7 @@ WrappedReplayBuffer.batch_size = 32
 
 
 def create_experiment_log_path(base:str, game:str, ep_train:str, ep_eval:str, alpha:str) -> str:
-    path = os.path.join(base,game,'ep_train_'+ep_train,'ep_eval_'+ep_eval,'alpha_'+alpha)
+    path = os.path.join(base,'game:'+game,'ep_train_'+ep_train,'ep_eval_'+ep_eval,'alpha_'+alpha)
     if not os.path.exists(path):
         os.makedirs(path)
     return path
@@ -71,14 +77,11 @@ def create_experiment_log_path(base:str, game:str, ep_train:str, ep_eval:str, al
 
 
 def main():
+    logging.set_verbosity(logging.INFO)
+    tf.compat.v1.disable_v2_behavior()
     with open(
             os.path.join(os.getcwd(),os.path.join('dopamine','jax','agents','rubust_dqn','configs','rubust_dqn.gin'))) as bindings:
         gin.parse_config(bindings)
-    #init demo params
-    gin.bind_parameter('Runner.num_iterations',3)
-    gin.bind_parameter('Runner.training_steps',3)
-    gin.bind_parameter('Runner.evaluation_steps',3)
-    gin.bind_parameter('Runner.max_steps_per_episode',3)
     #start loop params
     for game in GAMES:
         gin.bind_parameter('atari_lib.create_atari_environment.game_name', game)
@@ -88,10 +91,10 @@ def main():
                 gin.bind_parameter('JaxDQNAgent.epsilon_eval', ep_eval)
                 for alpha in alpha_range:
                     gin.bind_parameter('JaxRubustDQNAgent.alpha', alpha)
-                    LOG_PATH = create_experiment_log_path(baseDir, game, str(ep_train), str(ep_eval), str(alpha))
+                    LOG_PATH = create_experiment_log_path(baseDir, game,str(ep_train),str(ep_eval),str(alpha))
                     print('start experiment.game:{},epsilon train:{},epsilon_test:{},alpha robust:{}.'.format(game, str(ep_train), str(ep_eval), str(alpha)))
-                    dqn_runner = run_experiment.Runner(LOG_PATH, agent.create_rubust_dqn_agent)         #with learning
-                    dqn_runner.run_experiment()
+                    rubust_dqn_runner = run_experiment.Runner(LOG_PATH, agent.create_rubust_dqn_agent)         #with learning
+                    rubust_dqn_runner.run_experiment()
                     print('finish experiment')
 
     print('finish all experiments\ndone')

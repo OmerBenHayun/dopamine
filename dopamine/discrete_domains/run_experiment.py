@@ -209,7 +209,10 @@ class Runner(object):
     config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
     # Allocate only subset of the GPU memory as needed which allows for running
     # multiple agents/workers on the same GPU.
-    config.gpu_options.allow_growth = True
+    #config.gpu_options.allow_growth = True
+    config.gpu_options.allow_growth = False
+    config.gpu_options.per_process_gpu_memory_fraction = 0.9
+
     # Set up a session and initialize variables.
     self._sess = tf.compat.v1.Session('', config=config)
     self._agent = create_agent_fn(self._sess, self._environment,
