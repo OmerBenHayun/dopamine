@@ -56,10 +56,12 @@ class MyDQNAgent(rubust_dqn_agent.JaxRubustDQNAgent):
             bundle_dictionary = pickle.load(f)
         online_network = self.online_network.replace(
             params=bundle_dictionary['online_params'])
+        """
         optimizer_def = dqn_agent.create_optimizer('adam')
         self.optimizer = optimizer_def.create(online_network)
         self.target_network = self.target_network.replace(
             params=bundle_dictionary['target_params'])
+        """
 
     def get_q_values(self):
         return self.q_values
@@ -149,7 +151,7 @@ def main2():
     for ckpt,alpha in zip(ckpt_list,[0,0.05,0.1]):
         runner = example_viz_lib.MyRunner(base_dir,ckpt,create_dqn_agent)
         runner._agent.alpha =0
-        runner._agent.epsilon_eval = 0.0
+        runner._agent.epsilon_eval = 0.1
         runner._agent.eval_mode = True
         accumulated_reward_list = []
         for i in range(30):
