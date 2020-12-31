@@ -113,7 +113,7 @@ def target_q(target_network, next_states, rewards, terminals, cumulative_gamma, 
 
 @gin.configurable
 class JaxRubustDQNAgent(dqn_agent.JaxDQNAgent):
-    def __init__(self,num_actions,summary_writer=None,alpha = 0.1):
+    def __init__(self,num_actions,alpha,summary_writer=None):
         """This maintains all the DQN default argument values"""
         super().__init__(num_actions,summary_writer=summary_writer)
         logging.info('\t alpha: %f', alpha)

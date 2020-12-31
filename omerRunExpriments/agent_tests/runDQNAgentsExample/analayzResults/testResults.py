@@ -9,6 +9,10 @@ from dopamine.jax.agents.rubust_dqn import rubust_dqn_agent
 from dopamine.utils import example_viz_lib
 import matplotlib.pyplot as plt
 
+tmp_dir = os.path.join(os.path.expanduser('~'),'dop_tmp','tmp')
+output_dir = os.path.join(os.path.expanduser('~'),'dop_tmp','graph')
+
+
 # Customized JAX agent subclasses to record q-values, distributions, and  rewards.
 class MyRubustDQNAgent(rubust_dqn_agent.JaxRubustDQNAgent):
     """Sample JAX DQN agent to visualize Q-values and rewards."""
@@ -23,21 +27,24 @@ class MyRubustDQNAgent(rubust_dqn_agent.JaxRubustDQNAgent):
         self.optimizer = optimizer_def.create(online_network)
         self.target_network = self.target_network.replace(
             params=bundle_dictionary['target_params'])
+        print("Wi")
 
 def create_rubust_dqn_agent(sess, environment, summary_writer=None) ->rubust_dqn_agent.JaxRubustDQNAgent:
     del sess
     return MyRubustDQNAgent(num_actions=environment.action_space.n,
                       summary_writer=summary_writer)
 
-def list_of_pkl_files() -> dict:
+def alpha_train_to_ckpt() -> dict:
     ckpt_prefix_path = '/media/omer/3264-3930/OneDrive - Technion/Projects/ProjectA/dopamine/firstResultsOfExpirement/tmp/dopamineSimpleDemoExpiriment/Asterix/ep_train_0.1/ep_eval_0.01'
     ckpt_list = [os.path.join(ckpt_prefix_path, file_path, 'ckpt.199') for file_path in
                  ['alpha_0/checkpoints', 'alpha_0.05/checkpoints', 'alpha_0.1/checkpoints']]
+    alphas = ['alpha_0','alpha_0.05','alpha_0.1',]
     #res = dict()
     #res['alpha_0'] = os.path.join(ckpt_prefix_path, 'alpha_0/checkpoints', 'ckpt.199')
     #res['alpha_0.05'] = os.path.join(ckpt_prefix_path, 'alpha_0.05/checkpoints', 'ckpt.199')
     #res['alpha_0'] = os.path.join(ckpt_prefix_path, 'alpha_0/checkpoints', 'ckpt.199')
-    return ckpt_list
+    res = dict(zip(alphas,ckpt_list))
+    return res
 
 def run_single_episode_and_return_reward(runner :example_viz_lib.MyRunner):
     accumulated_reward = 0
@@ -67,43 +74,55 @@ def get_average_episodes_reward_stats_from_runner(runner :example_viz_lib.MyRunn
     rewards = []
     for i in range(num_of_episodes):
         rewards.append(run_single_episode_and_return_reward(runner))
-    return statistics.mean(rewards) , statistics.variance(rewards)
+    return statistics.mean(rewards) , statistics.stdev(rewards)
 
-def get_average_episodes_reward_stats_from_ckpt_file(file_path :str,
-                                                    alpha_test : float,epsilon_test : float,num_of_episodes : int) -> (str,float,float):
+def get_average_episodes_reward_stats_from_ckpt_file(file_path :str,alpha_train_str : str,
+                                                    alpha_test : float,epsilon_test : float,num_of_episodes : int) -> dict:
     tf.compat.v1.reset_default_graph()
     config = """
     atari_lib.create_atari_environment.game_name = '{}'
     OutOfGraphReplayBuffer.batch_size = 32
     OutOfGraphReplayBuffer.replay_capacity = 300
     """.format(GAME)
+    #gin.bind_parameter('JaxRubustDQNAgent.alpha', alpha_test)
+    #gin.bind_parameter('JaxRubustDQNAgent.epsi', alpha_test)
     gin.parse_config(config)
-    runner = example_viz_lib.MyRunner('',file_path, create_rubust_dqn_agent)
-    model_name_str = "alpha_train_{}".format(runner._agent.alpha)
-    mean , variance =   get_average_episodes_reward_stats_from_runner(runner, alpha_test, epsilon_test, num_of_episodes)
-    return model_name_str, mean , variance
 
-def compare_models_from_ckpt_files(ckpt_files : list,alpha_test : float,epsilon_test : float,num_of_episodes : int):
-    res = [] #each elment will be (model name , mean ,std) for the given hyperparamether and num_of_episodes.
-    for file_path in ckpt_files:
-        res.append(get_average_episodes_reward_stats_from_ckpt_file(file_path, alpha_test, epsilon_test, num_of_episodes))
+    runner = example_viz_lib.MyRunner(tmp_dir,file_path, create_rubust_dqn_agent)
+    #model_name_str = "alpha_train_{}".format(alpha_train_str) #change here alpha
+    mean , std =   get_average_episodes_reward_stats_from_runner(runner, alpha_test, epsilon_test, num_of_episodes)
+    #return model_name_str, mean , variance
+    #remove this lines only for debug
+    #std = 0
+    #mean = 0
+    result = {'alpha_train' : alpha_train_str , 'mean' : mean , 'std' : std}
+    return result
 
-def create_graph_from_compression (data : list,alpha_test : float,epsilon_test : float ,num_of_episodes : int ,show_std : bool):
-    #each element on list is tuple with three elements (str, float, float)
-    name_alpha_train , mean , std = zip(*data)
+def compare_models_from_ckpt_files(alpha_train_to_ckpt_dict: dict,alpha_test : float,epsilon_test : float,num_of_episodes : int):
+    #res = [] #each elment will be (model name , mean ,std) for the given hyperparamether and num_of_episodes.
+    results= [] #alpha_train_to_ckpt_dict_list is a list of dics . each dic has single key - alpha_train and single value path to file.
+    for alpha_train_str, file_path in alpha_train_to_ckpt_dict.items():
+        results.append(get_average_episodes_reward_stats_from_ckpt_file(file_path,alpha_train_str,alpha_test, epsilon_test, num_of_episodes))
+    create_graph_from_compression(results,alpha_test,epsilon_test,num_of_episodes)
+
+def create_graph_from_compression (results : list,alpha_test : float,epsilon_test : float ,num_of_episodes : int ,show_std: bool=False ):
+    #results is a list of dicts
+    alphas_train = [result['alpha_train'] for result in results]
+    means = [result['mean'] for result in results]
+    stds = [result['std'] for result in results]
     if (show_std):
-        plt.bar(range(len(data)) ,mean, align='center',yerr = std)
+        plt.bar(range(len(results)) ,means, align='center',yerr = stds)
     else:
-        plt.bar(range(len(data)), mean, align='center')
+        plt.bar(range(len(results)), means, align='center')
 
-    plt.xticks(range(len(data)), name_alpha_train)
+    plt.xticks(range(len(results)), alphas_train)
     plt.ylabel('Average reward per episode')
     plt.xlabel('Agent')
-    title = "game astrix - epsilon eval {}, alpha test {}, num_of_episodes {}".format(epsilon_test,alpha_test,num_of_episodes)
+    title = "game astrix - epsilon eval {} alpha test {} num_of_episodes {}".format(epsilon_test,alpha_test,num_of_episodes)
     plt.title(title)
     plt.grid(True)
-    file_name = title.replace(title,"_")
-    plt.savefig(file_name)
+    file= os.path.join(output_dir,title.replace(" ","_"))
+    plt.savefig(file)
     # Save the figure and show
     #plt.savefig('bar_plot_with_error_bars.png')
     plt.tight_layout()
@@ -115,26 +134,14 @@ GAME = 'Asterix'
 
 def main():
     print("hi")
-    ##tf.compat.v1.reset_default_graph()
-    ##config = """
-    ##atari_lib.create_atari_environment.game_name = '{}'
-    ##OutOfGraphReplayBuffer.batch_size = 32
-    ##OutOfGraphReplayBuffer.replay_capacity = 300
-    ##""".format(GAME)
-    ##gin.parse_config(config)
+    #alpha_test = 0
+    #epsilon_test =0
+    num_of_episodes = 20
+    for epsilon_test in [0,0.01,0.05,0.1,0.15,0.2,0.5]:
+        for alpha_test in [0,0.01,0.05,0.1,0.15,0.2,0.5]:
+            alpha_train_to_ckpt_dict = alpha_train_to_ckpt()
+            compare_models_from_ckpt_files(alpha_train_to_ckpt_dict, alpha_test, epsilon_test, num_of_episodes)
 
-
-    #first_ckpt_file = list_of_pkl_files()[0]
-    ##runner = example_viz_lib.MyRunner('',first_ckpt_file, create_rubust_dqn_agent)
-    #mean, std = get_average_episodes_reward_stats_from_runner(runner,0,0,2)
-    alpha_test = 0
-    epsilon_test =0
-    num_of_episodes =2
-    res = []
-    for file_path in list_of_pkl_files():
-        res.append(get_average_episodes_reward_stats_from_ckpt_file(file_path , alpha_test , epsilon_test , num_of_episodes ))
-    #create_graph_from_compression([("a",1,2),("b",3,4),("c",5,6)],alpha_test,epsilon_test,num_of_episodes)
-    create_graph_from_compression(res,alpha_test,epsilon_test,num_of_episodes,show_std=False)
     print("bye")
 
 
