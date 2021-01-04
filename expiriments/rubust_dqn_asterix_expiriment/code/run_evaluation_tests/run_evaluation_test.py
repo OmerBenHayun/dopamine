@@ -9,6 +9,12 @@ from dopamine.utils import example_viz_lib
 import matplotlib.pyplot as plt
 
 #run this script from the root directory
+#
+#to run on server 
+#activate venv
+#make dopamine pythpon root dir
+#go to dopamine main dir and run:
+#python -m expiriments.rubust_dqn_asterix_expiriment.code.run_evaluation_tests.run_evaluation_test
 
 base_path = os.path.join('expiriments','rubust_dqn_asterix_expiriment','code')
 tmp_dir = os.path.join(base_path,'evaluation_output_tmp_dir')
