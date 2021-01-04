@@ -74,9 +74,6 @@ def run_single_episode_and_return_reward(runner :example_viz_lib.MyRunner) -> fl
 
 def get_episodes_rewards_from_runner(runner :example_viz_lib.MyRunner
                 ,alpha_test : float,epsilon_test : float,num_of_episodes : int) -> list:
-    """
-    return mean and variance from num_of_episodes episodes
-    """
     runner._agent.alpha = alpha_test
     runner._agent.epsilon_eval = epsilon_test
     runner._agent.eval_mode = True
