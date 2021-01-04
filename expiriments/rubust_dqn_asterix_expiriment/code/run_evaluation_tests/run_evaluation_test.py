@@ -124,32 +124,5 @@ def main():
 
 
 
-
-def load():
-    with open(os.path.join(output_dir,output_res_name) , 'rb') as handle:
-        b = pickle.load(handle)
-    print(b)
-"""
-def tmp():
-    d = alpha_train_to_ckpt()
-    for k ,v in d.items():
-        print(k)
-        print(v)
-        if os.path.exists(v):
-            print('y')
-        else:
-            print('n')
-    print(alpha_train_to_ckpt())
-"""
-
-
-
-
-
-
-
-
 if __name__ == '__main__':
-    #main()
-    #tmp()
-    load()
+    main()
