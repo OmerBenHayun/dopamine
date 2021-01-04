@@ -31,7 +31,10 @@ def save_histogram_plot(title :str ,input_to_graph: dict,show_cvar :bool,cvar_p 
         #plt.hist(results,label=alpha_train,align='mid', stacked=True)
     #plt.hist(res, label=names,bins= np.arange(max(flat(res))+1)-0.5,align='mid', histtype='bar')
 
-    plt.hist(res, label=names,bins = 9, histtype='stepfilled',alpha=0.3,color=color_list)
+
+    #one can choose beteween stepfilled or bar.
+    #plt.hist(res, label=names,bins = 15, histtype='stepfilled',alpha=0.3,color=color_list)
+    plt.hist(res, label=names,bins = 15, histtype='bar')
     if (show_cvar):
         for (name,mean,color) in zip(names,cvar_list,color_list):
             plt.axvline(x=mean,color=color,linestyle='dashed',linewidth= 1,label='{} cvar of {}'.format(cvar_p,name))
@@ -61,14 +64,16 @@ def main():
    num_of_episodes  = loader.get_num_of_episodes()
    results = loader.load_results()
    for k,v in results.items():
-       #save_histogram_plot('Game: Astrix. '+'num of episodes: {}. '.format(num_of_episodes) +k[0]+'. '+k[1] ,v,True)
-       #save_histogram_plot('Game: Astrix. '+'num of episodes: {}. '.format(num_of_episodes) +k[0]+'. '+k[1] ,v,False)
+       save_histogram_plot('Game: Astrix. '+'num of episodes: {}. '.format(num_of_episodes) +k[0]+'. '+k[1] ,v,True)
+       save_histogram_plot('Game: Astrix. '+'num of episodes: {}. '.format(num_of_episodes) +k[0]+'. '+k[1] ,v,False)
+       """
        save_histogram_plot('Game: Astrix. '+'num of episodes: {}. '.format(num_of_episodes) +k[0]+'. '+k[1] ,{
            'a' : [1,2,3,4,5,5,5,5,5,5,4,3,2,1.5,2,2,2,2,3,3,3,3,5,5,5,5,5,5],
            'c' : [1+3,2+3,3+3,4+3,5+3,5+3,5+3,5+3,5+3,5+3,4+3,3+3,2+3,1.5+3,2+3,2+3,2+3,2+3,3+3,3+3,3+3,3+3,5+3,5+3,5+3,5+3,5+3,5],
            'b': [1+1, 2+1, 3+1, 4+1, 5+1, 5+1, 5+1, 5+1, 5+1, 5+1, 4+1, 3+1, 2+1, 1.5+1, 2+1, 2+1, 2+1, 2+1, 3+1, 3+1, 3+1, 3+1, 5+1, 5+1, 5+1, 5+1, 5+1, 5]
 
        },False)
+      """
 
 if __name__ == '__main__':
     main()

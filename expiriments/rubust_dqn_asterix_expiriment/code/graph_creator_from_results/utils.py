@@ -3,7 +3,7 @@ import pickle
 
 base_path = os.path.join('expiriments','rubust_dqn_asterix_expiriment','code')
 input_dir = os.path.join(base_path,'evaluation_output_res_data')
-num_of_episodes = 2
+num_of_episodes = 100
 output_res_name = 'evaluation_compression_num_of_episodes_{}.dict'.format(num_of_episodes)
 
 def load_results() -> dict:
