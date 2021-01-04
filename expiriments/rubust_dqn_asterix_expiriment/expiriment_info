@@ -1,0 +1,4 @@
+todo : write me
+
+
+expiriment on Astrix enviurment.traning 3 rubust dqn agents with alphas varing in {0,0.05,0.1} with epsilon train = 0.1.
