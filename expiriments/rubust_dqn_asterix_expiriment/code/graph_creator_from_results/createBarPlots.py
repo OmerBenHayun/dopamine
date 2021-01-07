@@ -50,4 +50,6 @@ def main():
        save_bar_plot('Game: Astrix. '+'num of episodes: {}. '.format(num_of_episodes) +k[0]+'. '+k[1] ,v,True)
 
 if __name__ == '__main__':
+    print("start")
     main()
+    print("finish")
