@@ -34,7 +34,7 @@ def save_histogram_plot(title :str ,input_to_graph: dict,show_cvar :bool,cvar_p 
 
     #one can choose beteween stepfilled or bar.
     #plt.hist(res, label=names,bins = 15, histtype='stepfilled',alpha=0.3,color=color_list)
-    plt.hist(res, label=names,bins = 15, histtype='bar')
+    plt.hist(res, label=names,color = color_list,bins = 15, histtype='bar')
     if (show_cvar):
         for (name,mean,color) in zip(names,cvar_list,color_list):
             plt.axvline(x=mean,color=color,linestyle='dashed',linewidth= 1,label='{} cvar of {}'.format(cvar_p,name))
